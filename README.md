@@ -84,13 +84,47 @@ For each of this sources we have sequential ETL job that load data from source a
 ./gradlew build
 ```
 
+### Install
+
 ```
 compile "com.fnklabs.hub:hub-core:$vers.hub"
 ```
 
-### Install
+## Usage
 
+```
+compile "com.fnklabs.hub:hub-core:$vers.hub"
+```
 
+```
+CassandraFactory cassandraFactory = new CassandraFactory(
+        System.getProperty("cassandra.hosts", "127.0.0.1").split(","),
+        "hub",
+        null,
+        null,
+        ConsistencyLevel.QUORUM.name(),
+        null,
+        10_000,
+        10_000,
+        8,
+        8
+);
+HubService hubService = new HubServiceBareImpl(10_000, 60_000, 60_000,
+                                    new SequenceServiceImpl(new SequenceDaoImpl(cassandraFactory)),
+                                    new HubDaoImpl(cassandraFactory),
+                                    new DomainDaoImpl(cassandraFactory),
+                                    new SourceDaoImpl(cassandraFactory)
+);
+
+hubService.register(HubServiceBareImpl.SYSTEM_DOMAIN_SEQUENCE, 1, Integer.MAX_VALUE);
+hubService.register(HubServiceBareImpl.SYSTEM_SOURCE_SEQUENCE, 1, Integer.MAX_VALUE);
+
+hubService.register("domain", 10_000, Long.MAX_VALUE);
+
+hubService.registerSource("source");
+
+long id = hubService.getIdFor("domain", ImmutableMap.of("source", "ABC"));
+```
 
 ## Requirements:
 ```

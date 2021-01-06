@@ -1,0 +1,14 @@
+dependencies {
+    compile project(":hub-core")
+
+    compile "com.datastax.cassandra:cassandra-driver-core:$vers.cassandra"
+
+    compile "org.apache.commons:commons-lang3:$vers.lang3"
+    compile "com.google.guava:guava:$vers.guava"
+
+    compile "com.fnklabs:fnklabs-metrics-core:$vers.metrics"
+    compile("com.fnklabs:fnklabs-metrics-codahale:$vers.metrics") {
+        exclude(group: "ch.qos.logback")
+    }
+
+}

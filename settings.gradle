@@ -1,0 +1,9 @@
+rootProject.name = "hub"
+
+include 'app'
+include 'hub-core'
+include 'hub-bare'
+include 'hub-benchmark'
+include 'hub-persistent-cassandra'
+//include 'gp-wrapper'
+//include 'hub-rmi'
