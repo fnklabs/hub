@@ -1,0 +1,9 @@
+dependencies {
+
+    compile project(":hub-bare")
+    compile project(":hub-persistent-cassandra")
+
+    jmh "org.slf4j:slf4j-api:$vers.slf4j"
+    jmh "ch.qos.logback:logback-core:$vers.logback"
+    jmh "ch.qos.logback:logback-classic:$vers.logback"
+}

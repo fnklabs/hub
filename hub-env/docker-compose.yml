@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  cassandra:
+    image: cassandra:3.11.9
+    hostname: cassandra
+    network_mode: bridge
+    volumes:
+    - "./cassandra/conf/cassandra.yaml:/etc/cassandra/cassandra.yaml"
+    ports:
+      - "9042:9042"
+
+

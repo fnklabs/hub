@@ -1,0 +1,174 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'http://dl.bintray.com/jfrog/jfrog-jars' }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.5.2"
+    }
+}
+
+plugins {
+    id "me.champeau.gradle.jmh" version "0.5.2" apply false
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+    apply plugin: "me.champeau.gradle.jmh"
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    sourceCompatibility = JavaVersion.VERSION_15
+    targetCompatibility = JavaVersion.VERSION_15
+
+    compileJava.options.encoding = 'UTF-8'
+    compileTestJava.options.encoding = 'UTF-8'
+
+    project.group = 'com.fnklabs.hub'
+    project.version = "$version"
+
+    ext {
+        vers = [
+                cassandra  : "3.10.2",
+                jmh        : "1.26",
+                junit      : '5.7.0',
+                guava      : '30.0-jre',
+                gson       : '2.8.6',
+                intellij   : '20.1.0',
+
+                lang3      : '3.11',
+                logback    : '1.2.3',
+
+                metrics    : '0.1.4',
+                mockito    : '3.6.0',
+
+                netty      : '4.1.48.Final',
+
+                slf4j      : '1.7.30',
+                spring     : '5.3.1',
+                springshell: '1.2.0.RELEASE',
+
+                tikv       : '3.0.1'
+        ]
+    }
+
+    test {
+        minHeapSize = "1g"
+        maxHeapSize = "4g"
+
+        useJUnit()
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
+    }
+
+
+    jmh {
+        fork = 1
+        warmupIterations = 3
+        iterations = 3
+
+        duplicateClassesStrategy = 'warn'
+
+        failOnError = true
+        resultFormat = 'JSON'
+        // Otherwise an error will happen:
+        // Could not expand ZIP 'byte-buddy-agent-1.9.7.jar'.
+        includeTests = true
+        zip64 = true
+        jmhVersion = "1.26"
+    }
+
+    dependencies {
+        jmh "org.openjdk.jmh:jmh-core:$vers.jmh"
+        jmh "org.openjdk.jmh:jmh-generator-annprocess:$vers.jmh"
+        jmh "org.openjdk.jmh:jmh-generator-bytecode:$vers.jmh"
+
+        testCompile "org.junit.jupiter:junit-jupiter-api:$vers.junit"
+        testCompile "org.junit.jupiter:junit-jupiter-params:$vers.junit"
+        testCompile "org.junit.jupiter:junit-jupiter-engine:$vers.junit"
+        testCompile "org.junit.vintage:junit-vintage-engine:$vers.junit"
+
+        testCompile "org.mockito:mockito-core:$vers.mockito"
+        testCompile "org.mockito:mockito-core:$vers.mockito"
+        testCompile "org.mockito:mockito-junit-jupiter:$vers.mockito"
+    }
+
+    java {
+        withJavadocJar()
+        withSourcesJar()
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
+                    }
+                }
+                pom {
+                    name = 'Hub Sequence Service Library'
+                    description = 'Sequence Service Library library'
+                    url = 'https://github.com/fnklabs/hub'
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'a.alimov'
+                            name = 'Alisher Alimov'
+                            email = 'alisher.alimov@fnklabs.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git@github.com:fnklabs/hub.git'
+                        developerConnection = 'scm:git:ssh:git@github.com:fnklabs/hub.git'
+                        url = 'https://github.com/fnklabs/hub'
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                credentials {
+                    username = "$sonatypeUsername"
+                    password = "$sonatypePassword"
+                }
+            }
+        }
+    }
+
+    signing {
+        required { !version.endsWith('SNAPSHOT') && gradle.taskGraph.hasTask("publish") }
+        sign publishing.publications.mavenJava
+    }
+
+
+    javadoc {
+        if (JavaVersion.current().isJava9Compatible()) {
+            options.addBooleanOption('html5', true)
+        }
+    }
+
+}
